@@ -9,3 +9,34 @@ jobs:
     steps:
       - name: Echo current time
         run: echo "Workflow triggered at $(date)"
+
+  auto-merge:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: List open pull requests
+      id: list-prs
+      uses: peter-evans/open-pull-requests@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Merge eligible PRs
+      if: steps.list-prs.outputs.count > 0
+      run: |
+        echo "Merging open pull requests..."
+        PR_LIST=$(echo '${{ steps.list-prs.outputs.pull-requests }}' | jq -r '.[] | select(.mergeable == true) | .number')
+        
+        for PR_NUMBER in $PR_LIST; do
+          echo "Merging PR #$PR_NUMBER..."
+          gh pr merge $PR_NUMBER --repo $GITHUB_REPOSITORY --merge --delete-branch
+        done
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: No PRs to merge
+      if: steps.list-prs.outputs.count == 0
+      run: echo "No open pull requests eligible for merge."
