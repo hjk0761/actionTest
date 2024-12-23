@@ -1,4 +1,4 @@
-name: Auto Merge Pushed PRs
+name: Auto Create Pull Request
 
 on:
   push:
@@ -6,33 +6,26 @@ on:
       - 'hjk0761'
 
 jobs:
-  auto-merge:
+  auto-pull-request:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: List open pull requests
-      id: list-prs
-      uses: peter-evans/open-pull-requests@v1
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: summrize
+        run: |
+          branch_name="${GITHUB_REF#refs/heads/}"
+          echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+          pr_title="${{ env.BRANCH_NAME }}"
+          echo "PR_TITLE=$pr_title" >> $GITHUB_ENV
+          summary=$(cat body.md)
+            echo "PR_BODY<<EOF" >> $GITHUB_ENV
+          echo "$summary" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
-    - name: Merge eligible PRs
-      if: steps.list-prs.outputs.count > 0
-      run: |
-        echo "Merging open pull requests..."
-        PR_LIST=$(echo '${{ steps.list-prs.outputs.pull-requests }}' | jq -r '.[] | select(.mergeable == true) | .number')
-        
-        for PR_NUMBER in $PR_LIST; do
-          echo "Merging PR #$PR_NUMBER..."
-          gh pr merge $PR_NUMBER --repo $GITHUB_REPOSITORY --merge --delete-branch
-        done
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: No PRs to merge
-      if: steps.list-prs.outputs.count == 0
-      run: echo "No open pull requests eligible for merge."
+      - name: Create Pull Request
+        run: |
+          gh pr create --title "${{ env.PR_TITLE }}" --body "${{ env.PR_BODY }}" --base "main"
+        env:
+          GH_TOKEN: ${{ github.token }}
