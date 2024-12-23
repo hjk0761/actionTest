@@ -29,7 +29,7 @@ jobs:
         echo "PR_LIST=$PR_LIST" >> $GITHUB_ENV
         
     - name: Merge eligible PRs
-      if: steps.list-prs.outputs.count > 0
+      if: ${#${{ env.PR_LIST }}[@]} > 0
       run: |
         echo "Merging open pull requests..."
         PR_LIST=${{ env.PR_LIST }}
@@ -43,5 +43,5 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: No PRs to merge
-      if: steps.list-prs.outputs.count == 0
+      if: ${#${{ env.PR_LIST }}[@]} == 0
       run: echo "No open pull requests eligible for merge."
