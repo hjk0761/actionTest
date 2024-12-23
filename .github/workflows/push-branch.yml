@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'hjk0761'
+      - 'test'
 
 jobs:
   auto-pull-request:
