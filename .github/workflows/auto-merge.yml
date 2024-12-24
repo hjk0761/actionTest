@@ -1,9 +1,5 @@
 name: Auto Merge Open PRs
 
-on:
-  schedule:
-    - cron: '0 7 * * *' # 매일 UTC 07:00에 실행 (KST 16:00)
-
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
