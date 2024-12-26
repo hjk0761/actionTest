@@ -1,0 +1,24 @@
+name: Assign PR Creator as Assignee
+
+on:
+  pull_request:
+    types:
+      - opened # PR 생성 시 트리거
+
+jobs:
+  assign-creator:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Assign PR creator
+        run: |
+          # PR 작성자 가져오기
+          AUTHOR=${{ github.event.pull_request.user.login }}
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          # Assignee로 PR 작성자 지정
+          curl -s -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{"assignees":["'"$AUTHOR"'"]}' \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${PR_NUMBER}"
