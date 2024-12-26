@@ -1,7 +1,7 @@
 name: Test Schedule Workflow
 on:
   schedule:
-    - cron: '*/2 * * * *' # 5분 간격으로 테스트
+    - cron: '0 0 1 * *' # 5분 간격으로 테스트
 
 jobs:
   test-job:
