@@ -36,3 +36,8 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -d '{"title": "n주차 정산", "body": "'"$CONTENT"'"}' \
             "https://api.github.com/repos/${{ github.repository }}/issues"
+      - name: Upload weekly stats
+        uses: actions/upload-artifact@v3
+        with:
+          name: weekly-stats
+          path: weekly_stats.json
