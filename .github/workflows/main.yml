@@ -28,8 +28,8 @@ jobs:
             RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
               "$API_URL?state=$STATE&per_page=$PER_PAGE&page=$PAGE")
-            echo "$RESPONSE"
             FILTERED_RESPONSE=$(echo "$RESPONSE" | jq '[.[] | {id, title, assignee, labels}]')
+            echo "$FILTERED_RESPONSE"
             echo "$FILTERED_RESPONSE" | jq '. + input' $OUTPUT_FILE > temp.json && mv temp.json $OUTPUT_FILE
             LENGTH=$(echo "$FILTERED_RESPONSE" | jq '. | length')
             if [ "$LENGTH" -lt "$PER_PAGE" ]; then
