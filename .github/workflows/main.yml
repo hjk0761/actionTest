@@ -22,7 +22,7 @@ jobs:
           PER_PAGE=100
           PAGE=1
           OUTPUT_FILE="pr_data.json"
-          echo "[" > $OUTPUT_FILE
+          echo "[]" > $OUTPUT_FILE
           
           jq empty $OUTPUT_FILE || { echo "pr_data.json initialization failed"; exit 1; }
           
@@ -49,7 +49,8 @@ jobs:
             echo "$FILTERED_RESPONSE" > temp.json
             echo "temp.json:"
             cat temp.json
-            cat temp.json >> $OUTPUT_FILE || { echo "Failed to move temp.json to $OUTPUT_FILE"; exit 1; }
+            jq -s 'add' $OUTPUT_FILE <(jq . temp.json) > $OUTPUT_FILE.tmp && mv $OUTPUT_FILE.tmp $OUTPUT_FILE
+
           
             LENGTH=$(echo "$FILTERED_RESPONSE" | jq '. | length')
             if [ "$LENGTH" -lt "$PER_PAGE" ]; then
@@ -57,10 +58,7 @@ jobs:
             fi
           
             PAGE=$((PAGE + 1))
-            echo "," > $OUTPUT_FILE
           done
-
-          echo "]" > $OUTPUT_FILE
 
           echo "merged result:"
           echo "$OUTPUT_FILE"
