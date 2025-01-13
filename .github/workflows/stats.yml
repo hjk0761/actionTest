@@ -1,0 +1,78 @@
+name: Test Weekly Stats Report
+
+on:
+  workflow_run:
+    workflows:
+      - 'Merge Open PRs'
+    types:
+      - completed
+
+jobs:
+  generate-stats:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Extract closed pull requests using API
+        id: list-prs
+        run: |
+          API_URL="https://api.github.com/repos/${{ github.repository }}/pulls"
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          STATE="closed"
+          PER_PAGE=100
+          PAGE=1
+          OUTPUT_FILE="pr_data.json"
+          echo "[]" > $OUTPUT_FILE
+      
+          while true; do
+            RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "$API_URL?state=$STATE&per_page=$PER_PAGE&page=$PAGE")
+            FILTERED_RESPONSE=$(echo "$RESPONSE" | jq '[.[] | {id, title, assignee, labels}]')
+            echo "$FILTERED_RESPONSE" | jq '. + input' $OUTPUT_FILE > temp.json && mv temp.json $OUTPUT_FILE
+            LENGTH=$(echo "$FILTERED_RESPONSE" | jq '. | length')
+            if [ "$LENGTH" -lt "$PER_PAGE" ]; then
+              break
+            fi
+            PAGE=$((PAGE + 1))
+          done
+
+
+      - name: Fetch Labels from Repository
+        id: fetch-labels
+        run: |
+          LABELS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/labels")
+
+          echo "$LABELS" > label_data.json
+
+      - name: Upload PR and Label Data
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-and-label-data
+          path: |
+            pr_data.json
+            label_data.json
+
+      - name: Analyze PRs and Generate Stats
+        id: generate-stats
+        run: |
+          python .github/workflows/generate_weekly_stats.py pr_data.json .github/workflows/target_goals.json label_data.json weekly_stats.md
+
+      - name: Post Weekly Stats
+        run: |
+          CONTENT=$(cat weekly_stats.md)
+          curl -s -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{"title": "n주차 정산", "body": "'"$CONTENT"'"}' \
+            "https://api.github.com/repos/${{ github.repository }}/issues"
+      
+      - name: Upload weekly stats
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-stats
+          path: weekly_stats.md
