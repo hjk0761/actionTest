@@ -52,6 +52,8 @@ jobs:
               echo "$FILTERED_RESPONSE"
               echo "pr_data.json:"
               cat $OUTPUT_FILE
+              echo "temp.json:"
+              cat temp.json
               exit 1
             }
             
