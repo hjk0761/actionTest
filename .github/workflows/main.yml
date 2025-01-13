@@ -47,11 +47,11 @@ jobs:
             echo "Merging filtered response into pr_data.json"
 
             echo "$FILTERED_RESPONSE" > temp.json
+            echo "temp.json:"
             cat temp.json
-            mv temp.json $OUTPUT_FILE
             
             echo "Merged result:"          
-            mv temp.json $OUTPUT_FILE || { echo "Failed to move temp.json to $OUTPUT_FILE"; exit 1; }
+            cat temp.json >> $OUTPUT_FILE || { echo "Failed to move temp.json to $OUTPUT_FILE"; exit 1; }
           
             LENGTH=$(echo "$FILTERED_RESPONSE" | jq '. | length')
             if [ "$LENGTH" -lt "$PER_PAGE" ]; then
