@@ -45,10 +45,15 @@ jobs:
           
             # 병합 과정 디버깅
             echo "Merging filtered response into pr_data.json"
-            echo "Filtered Response:"
-            echo "$FILTERED_RESPONSE"
           
-            echo "$FILTERED_RESPONSE" | jq '. + input' $OUTPUT_FILE > temp.json || { echo "Merge failed."; exit 1; }
+            echo "$FILTERED_RESPONSE" | jq '. + input' $OUTPUT_FILE > temp.json || {
+              echo "Merge failed."
+              echo "Filtered Response:"
+              echo "$FILTERED_RESPONSE"
+              echo "pr_data.json:"
+              cat $OUTPUT_FILE
+              exit 1
+            }
             
             echo "Merged result:"
             cat temp.json
